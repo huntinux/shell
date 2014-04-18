@@ -5,6 +5,8 @@
 # hongjin.cao (huntinux@gmail.com)
 # 2014-04-18
 
+#set -x
+
 function usage(){
 	echo "Usage:$0 [port]"
 	echo "port has default 8080"		
@@ -34,6 +36,8 @@ function killit(){
 	}
 }
 
+
+# start
 if [ $# -eq 1 ];then
 	port=$1
 else
