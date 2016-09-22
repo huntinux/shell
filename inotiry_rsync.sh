@@ -3,17 +3,17 @@
 #
 # backup script using inotify and rsync
 # hongjin.cao
-# do ssh passwordless first : http://www.thegeekstuff.com/2008/11/3-steps-to-perform-ssh-login-without-password-using-ssh-keygen-ssh-copy-id/
 #
 
 #
 # variables
 #
+
 LOG_FILE=/dev/null
 WIKI_ROOT=/home/wiki/work/wiki/
 BACKUP_MACHINE_PATH=/home/wiki/work/wiki-backup/
-BACKUP_MACHINE_IP=10.0.0.1
-BACKUP_MACHINE_USER=hongjin.cao
+BACKUP_MACHINE_IP=127.0.0.1
+BACKUP_MACHINE_USER=wiki
 INOTIFYWAIT_BIN=`which inotifywait`
 
 #
@@ -21,26 +21,26 @@ INOTIFYWAIT_BIN=`which inotifywait`
 #
 
 cd ${WIKI_ROOT}                         
-$INOTIFYWAIT_BIN -mrq --excludei='(data/cache/|data/locks/)' --format  '%e %w%f' -e modify,create,delete,attrib,close_write,move . | \
+$INOTIFYWAIT_BIN -mrq --excludei='(data/cache/|data/locks/|data/index/|data/tmp/)' --format  '%e %w%f' -e modify,create,delete,attrib,close_write,move . | \
 while read INO_EVENT INO_FILE
 do
        echo "Event:$INO_EVENT File:$INO_FILE"
 
        if [[ $INO_EVENT =~ 'CREATE' ]] || [[ $INO_EVENT =~ 'MODIFY' ]] || [[ $INO_EVENT =~ 'CLOSE_WRITE' ]] || [[ $INO_EVENT =~ 'MOVED_TO' ]]         
        then
-              rsync -avzc  ${INO_FILE} ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH}          
+       		rsync -avzc --recursive $(dirname ${INO_FILE}) ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH}          
        fi
 
        if [[ $INO_EVENT =~ 'DELETE' ]] || [[ $INO_EVENT =~ 'MOVED_FROM' ]]
        then
-              rsync -avz --ignore-existing --recursive --delete  $(dirname ${INO_FILE}) ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH} 
+               	rsync -avz --ignore-existing --recursive --delete  $(dirname ${INO_FILE}) ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH} 
        fi
 
        if [[ $INO_EVENT =~ 'ATTRIB' ]]
        then
-              if [ ! -d "$INO_FILE" ] 
-              then
-                     rsync -avzcR $(dirname ${INO_FILE}) ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH}
-              fi
+               	if [ ! -d "$INO_FILE" ] 
+               	then
+               		rsync -avzc --recursive $(dirname ${INO_FILE}) ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH}
+               	fi
        fi
 done
