@@ -3,6 +3,7 @@
 #
 # backup script using inotify and rsync
 # hongjin.cao
+# do ssh passwordless first : http://www.thegeekstuff.com/2008/11/3-steps-to-perform-ssh-login-without-password-using-ssh-keygen-ssh-copy-id/
 #
 
 #
@@ -27,19 +28,19 @@ do
 
        if [[ $INO_EVENT =~ 'CREATE' ]] || [[ $INO_EVENT =~ 'MODIFY' ]] || [[ $INO_EVENT =~ 'CLOSE_WRITE' ]] || [[ $INO_EVENT =~ 'MOVED_TO' ]]         
        then
-                rsync -avzc  ${INO_FILE} ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH}          
-        fi
+              rsync -avzc  ${INO_FILE} ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH}          
+       fi
 
-        if [[ $INO_EVENT =~ 'DELETE' ]] || [[ $INO_EVENT =~ 'MOVED_FROM' ]]
-        then
-                rsync -avz --ignore-existing --recursive --delete  $(dirname ${INO_FILE}) ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH} 
-        fi
+       if [[ $INO_EVENT =~ 'DELETE' ]] || [[ $INO_EVENT =~ 'MOVED_FROM' ]]
+       then
+              rsync -avz --ignore-existing --recursive --delete  $(dirname ${INO_FILE}) ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH} 
+       fi
 
-        if [[ $INO_EVENT =~ 'ATTRIB' ]]
-        then
-                if [ ! -d "$INO_FILE" ] 
-                then
-                        rsync -avzcR $(dirname ${INO_FILE}) ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH}
-                fi
-        fi
+       if [[ $INO_EVENT =~ 'ATTRIB' ]]
+       then
+              if [ ! -d "$INO_FILE" ] 
+              then
+                     rsync -avzcR $(dirname ${INO_FILE}) ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH}
+              fi
+       fi
 done
