@@ -29,9 +29,9 @@ function LOG()
 # start
 #
 
-LOG "=================================="
+LOG "==========================================="
 LOG " Backup Start at:" `date +%H:%M:%S`
-LOG "=================================="
+LOG "==========================================="
 
 cd $WIKI_ROOT || { LOG 'WIKI_ROOT ERROR' && exit; }
 $INOTIFYWAIT_BIN -mrq --excludei='(data/cache/|data/locks/|data/index/|data/tmp/)' --format  '%e %w%f %T' --timefmt='%Y-%m-%d/%H:%M:%S' -e modify,create,delete,attrib,close_write,move .  | \
@@ -46,12 +46,13 @@ do
 
        if [[ $INO_EVENT =~ 'CREATE' ]] || [[ $INO_EVENT =~ 'MODIFY' ]] || [[ $INO_EVENT =~ 'CLOSE_WRITE' ]] || [[ $INO_EVENT =~ 'MOVED_TO' ]]         
        then
-       		rsync -avzc  ${INO_FILE} ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH}          
+       		#rsync -avzcR $(dirname ${INO_FILE}) ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH}          
+       		rsync -avzcR ${INO_FILE} ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH}          
        fi
 
        if [[ $INO_EVENT =~ 'DELETE' ]] || [[ $INO_EVENT =~ 'MOVED_FROM' ]]
        then
-               	rsync -avz --ignore-existing --recursive --delete  $(dirname ${INO_FILE}) ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH} 
+               	rsync -avzR --ignore-existing --delete  $(dirname ${INO_FILE}) ${BACKUP_MACHINE_USER}@${BACKUP_MACHINE_IP}:${BACKUP_MACHINE_PATH} 
        fi
 
        if [[ $INO_EVENT =~ 'ATTRIB' ]]
