@@ -9,21 +9,26 @@
 # variables
 #
 
-LOG_FILE=/home/wiki/backup-log/`date +'%Y-%m-%d'`.log
-WIKI_ROOT=/var/www/html/
-BACKUP_MACHINE_PATH=/home/manager/wiki-backup                             
-BACKUP_MACHINE_IP=10.0.0.1 
-BACKUP_MACHINE_USER=manager
-INOTIFYWAIT_BIN=`which inotifywait`
+BACKUP_LOG_FILE=/home/huntinux/work/tmp/wiki-backup-log/`date +'%Y-%m-%d'`.log
+BACKUP_ROOT=/home/huntinux/work/tmp/wiki
+#BACKUP_EXCLUDE_DIRS="(data/cache/|data/locks/|data/index/|data/tmp/)"
+BACKUP_MACHINE_PATH=/home/huntinux/work/tmp/wiki-backup
+BACKUP_MACHINE_IP=127.0.0.1
+BACKUP_MACHINE_USER=huntinux
 
 #
 # function util
 #
 function LOG()
 {
-	echo "$@">>$LOG_FILE
+	echo "$@">>$BACKUP_LOG_FILE
 }
-
+function CHECK_EXIST()
+{
+    command -v "$@" >/dev/null 2>&1 || { echo >&2 "I require '$@' but it's not installed.  Aborting."; exit 1; }
+    #type "$@" >/dev/null 2>&1 || { echo >&2 "I require '$@' but it's not installed.  Aborting."; exit 1; }
+    #hash "$@" 2>/dev/null || { echo >&2 "I require '$@' but it's not installed.  Aborting."; exit 1; }
+}
 
 #
 # start
@@ -33,8 +38,11 @@ LOG "==========================================="
 LOG " Backup Start at:" `date +%H:%M:%S`
 LOG "==========================================="
 
-cd $WIKI_ROOT || { LOG 'WIKI_ROOT ERROR' && exit; }
-$INOTIFYWAIT_BIN -mrq --excludei='(data/cache/|data/locks/|data/index/|data/tmp/)' --format  '%e %w%f %T' --timefmt='%Y-%m-%d/%H:%M:%S' -e modify,create,delete,attrib,close_write,move .  | \
+CHECK_EXIST inotifywait
+CHECK_EXIST rsync 
+
+cd $BACKUP_ROOT || { LOG 'BACKUP_ROOT ERROR' && exit 1; }
+inotifywait -mrq --excludei='$BACKUP_EXCLUDE_DIRS' --format  '%e %w%f %T' --timefmt='%Y-%m-%d/%H:%M:%S' -e modify,create,delete,attrib,close_write,move .  | \
 while read INO_EVENT INO_FILE INO_TIME
 do
        if [[ $INO_FILE =~ './data/meta/davcal.sqlite3' ]]; then
